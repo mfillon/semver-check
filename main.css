@@ -1,0 +1,29 @@
+body {
+  font-family: 'Montserrat', sans-serif;
+}
+#content {
+  text-align: center;
+}
+.avatars {
+  text-align: center;
+}
+.avatars ul {
+  margin: 0;
+  padding: 0;
+}
+.avatars ul .avatar {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  display: inline-block;
+}
+.avatars ul .avatar + .avatar {
+  margin-left: 50px;
+}
+.avatars ul .avatar img {
+  width: 150px;
+  border-radius: 50%;
+  margin-bottom: 10px;
+  display: block;
+  border: 5px solid black;
+}

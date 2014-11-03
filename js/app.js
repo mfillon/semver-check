@@ -2,52 +2,14 @@
 var React = require('react'),
     semver = require('semver');
 
-var SemverCheckerForm = React.createClass({displayName: 'SemverCheckerForm',
-    handleSubmit: function(event) {
-        event.preventDefault();
-
-        var constraint = this.refs.constraint.getDOMNode().value.trim(),
-            version = this.refs.version.getDOMNode().value.trim();
-
-        if (!constraint || !version) {
-            return;
-        }
-
-        alert(semver.satisfies(version, constraint));
-
-        // Inject current values
-        this.refs.constraint.getDOMNode().value = constraint;
-        this.refs.version.getDOMNode().value = version;
-
-        return;
-    },
-
-    render: function() {
-        return (
-            React.createElement("form", {className: "semverCheckerForm", onSubmit: this.handleSubmit}, 
-                React.createElement("input", {type: "text", placeholder: "Constraint", ref: "constraint"}), 
-                React.createElement("input", {type: "text", placeholder: "Version", ref: "version"}), 
-
-                React.createElement("input", {type: "submit", value: "Post"})
-            )
-        );
-    }
-});
-
-var SemverChecker = React.createClass({displayName: 'SemverChecker',
-    render: function() {
-        return (
-            React.createElement(SemverCheckerForm, null)
-        );
-    }
-});
+var SemverChecker = require('./components/semver-checker.jsx');
 
 React.renderComponent(
     React.createElement(SemverChecker, null),
     document.getElementById('content')
 );
 
-},{"react":148,"semver":149}],2:[function(require,module,exports){
+},{"./components/semver-checker.jsx":151,"react":148,"semver":149}],2:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -19462,4 +19424,65 @@ if (typeof define === 'function' && define.amd)
   semver = {}
 );
 
-},{}]},{},[1]);
+},{}],150:[function(require,module,exports){
+var React = require('react');
+
+var SemverCheckerForm = React.createClass({displayName: 'SemverCheckerForm',
+    handleSubmit: function(event) {
+        event.preventDefault();
+
+        var constraint = this.refs.constraint.getDOMNode().value.trim(),
+            version = this.refs.version.getDOMNode().value.trim();
+
+        if (!constraint || !version) {
+            return;
+        }
+
+        // Re-inject current values
+        this.refs.constraint.getDOMNode().value = constraint;
+        this.refs.version.getDOMNode().value = version;
+
+        this.props.onSemverCheck({ version: version, constraint: constraint });
+
+        return;
+    },
+
+    render: function() {
+        return (
+            React.createElement("form", {className: "semverCheckerForm", onSubmit: this.handleSubmit}, 
+                React.createElement("input", {type: "text", placeholder: "Constraint", ref: "constraint"}), 
+                React.createElement("input", {type: "text", placeholder: "Version", ref: "version"}), 
+
+                React.createElement("input", {type: "submit", value: "Post"})
+            )
+        );
+    }
+});
+
+module.exports = SemverCheckerForm;
+
+},{"react":148}],151:[function(require,module,exports){
+var React = require('react'),
+    semver = require('semver'),
+    SemverCheckerForm = require('./semver-checker-form.jsx');
+
+var SemverChecker = React.createClass({displayName: 'SemverChecker',
+    handleSemverCheck: function(semverData) {
+
+        if (semver.satisfies(semverData.version, semverData.constraint)) {
+            alert(semverData.version + " version satisfies " + semverData.constraint);
+        } else {
+            alert(semverData.version + " version doesn't satisfie " + semverData.constraint);
+        }
+    },
+    render: function() {
+        return (
+            React.createElement(SemverCheckerForm, {onSemverCheck: this.handleSemverCheck})
+        );
+    }
+});
+
+
+module.exports = SemverChecker;
+
+},{"./semver-checker-form.jsx":150,"react":148,"semver":149}]},{},[1]);
