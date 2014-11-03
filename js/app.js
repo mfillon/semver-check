@@ -19442,6 +19442,14 @@ var SemverCheckerForm = React.createClass({displayName: 'SemverCheckerForm',
         this.refs.constraint.getDOMNode().value = constraint;
         this.refs.version.getDOMNode().value = version;
 
+        if (!this.props.onSemverValidate({ version: version })) {
+            this.refs.version.getDOMNode().classList.add('error');
+
+            return;
+        }
+
+        this.refs.version.getDOMNode().classList.remove('error');
+
         this.props.onSemverCheck({ version: version, constraint: constraint });
 
         return;
@@ -19453,7 +19461,7 @@ var SemverCheckerForm = React.createClass({displayName: 'SemverCheckerForm',
                 React.createElement("input", {type: "text", placeholder: "Constraint", ref: "constraint"}), 
                 React.createElement("input", {type: "text", placeholder: "Version", ref: "version"}), 
 
-                React.createElement("input", {type: "submit", value: "Post"})
+                React.createElement("input", {type: "submit", value: "Check!"})
             )
         );
     }
@@ -19475,9 +19483,12 @@ var SemverChecker = React.createClass({displayName: 'SemverChecker',
             alert(semverData.version + " version doesn't satisfie " + semverData.constraint);
         }
     },
+    handleSemverValidate: function(semverData) {
+        return semver.valid(semverData.version);
+    },
     render: function() {
         return (
-            React.createElement(SemverCheckerForm, {onSemverCheck: this.handleSemverCheck})
+            React.createElement(SemverCheckerForm, {onSemverCheck: this.handleSemverCheck, onSemverValidate: this.handleSemverValidate})
         );
     }
 });

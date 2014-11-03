@@ -1,11 +1,22 @@
 body {
+  padding: 0;
+  margin: 0;
   font-family: 'Montserrat', sans-serif;
+  font-size: 15px;
+  text-align: center;
 }
 #content {
   text-align: center;
 }
 .avatars {
   text-align: center;
+  background-color: rgba(207, 207, 207, 0.3);
+  padding: 0.5em 0;
+  margin: 2em 0 0 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  position: absolute;
 }
 .avatars ul {
   margin: 0;
@@ -21,9 +32,29 @@ body {
   margin-left: 50px;
 }
 .avatars ul .avatar img {
-  width: 150px;
+  width: 100px;
   border-radius: 50%;
   margin-bottom: 10px;
   display: block;
   border: 5px solid black;
+}
+input {
+  font-size: 1.5em;
+  padding: 0.5em;
+  border: 1px solid #CFCFCF;
+}
+input:first-of-type {
+  border-right: none;
+  border-radius: 0.2em 0 0 0.2em;
+}
+input:last-of-type {
+  border-left: none;
+  border-radius: 0 0.2em 0.2em 0;
+}
+input + input {
+  border-right: none;
+  border-radius: 0;
+}
+input.error {
+  color: #D60000;
 }
