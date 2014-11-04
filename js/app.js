@@ -19436,11 +19436,7 @@ var SemverCheckerForm = React.createClass({displayName: 'SemverCheckerForm',
             return;
         }
 
-        // Re-inject current values
-        this.refs.constraint.getDOMNode().value = constraint;
-        this.refs.version.getDOMNode().value = version;
-
-        if (!this.props.onSemverValidate({ version: version })) {
+        if (!this.props.onSemverValidate(version )) {
             this.refs.version.getDOMNode().classList.add('error');
 
             return;
@@ -19448,7 +19444,7 @@ var SemverCheckerForm = React.createClass({displayName: 'SemverCheckerForm',
 
         this.refs.version.getDOMNode().classList.remove('error');
 
-        this.props.onSemverCheck({ version: version, constraint: constraint });
+        this.props.onSemverCheck(version, constraint);
 
         return;
     },
@@ -19468,47 +19464,72 @@ module.exports = SemverCheckerForm;
 },{"react":148}],151:[function(require,module,exports){
 var React = require('react'),
     semver = require('semver'),
-    SemverCheckerForm = require('./semver-checker-form.jsx');
+    SemverCheckerForm = require('./semver-checker-form.jsx'),
+    SemverFeedback = require('./semver-feedback.jsx');
 
 var SemverChecker = React.createClass({displayName: 'SemverChecker',
     getInitialState: function() {
         return {
             satisfies: null,
-            feedback: 'Enter a constraint and a version number to check if it matches.'
+            version: null,
+            constraint: null
         };
     },
 
-    handleSemverCheck: function(semverData) {
-
-        if (semver.satisfies(semverData.version, semverData.constraint)) {
-            this.setState({
-                satisfies: true,
-                feedback: semverData.version + " version satisfies " + semverData.constraint
-            });
-        } else {
-            this.setState({
-                satisfies: false,
-                feedback: semverData.version + " version doesn't satisfie " + semverData.constraint
-            });
-        }
+    handleSemverCheck: function(version, constraint) {
+        this.setState({
+            satisfies: semver.satisfies(version, constraint),
+            version: version,
+            constraint: constraint,
+        });
     },
 
-    handleSemverValidate: function(semverData) {
-        return semver.valid(semverData.version);
+    handleSemverValidate: function(version) {
+        return semver.valid(version);
     },
 
     render: function() {
         return (
             React.createElement("div", null, 
-                React.createElement(SemverCheckerForm, {onSemverCheck: this.handleSemverCheck, onSemverValidate: this.handleSemverValidate}), 
+                React.createElement(SemverCheckerForm, {onSemverCheck:  this.handleSemverCheck, onSemverValidate:  this.handleSemverValidate}), 
 
-                React.createElement("div", {className:  'well' + (this.state.satisfies === false ? ' error' : '') },  this.state.feedback)
+                React.createElement(SemverFeedback, {satisfies:  this.state.satisfies, version:  this.state.version, constraint:  this.state.constraint})
             )
         );
     }
 });
 
-
 module.exports = SemverChecker;
 
-},{"./semver-checker-form.jsx":150,"react":148,"semver":149}]},{},[1]);
+},{"./semver-checker-form.jsx":150,"./semver-feedback.jsx":152,"react":148,"semver":149}],152:[function(require,module,exports){
+var React = require('react');
+
+var SemverFeedback = React.createClass({displayName: 'SemverFeedback',
+        render: function() {
+            if (true === this.props.satisfies) {
+                return (
+                    React.createElement("div", {className: "well success"}, 
+                        React.createElement("code", null,  this.props.version), " satisfies contraint ", React.createElement("code", null,  this.props.constraint)
+                    )
+                );
+            }
+
+            if (false === this.props.satisfies) {
+                return (
+                    React.createElement("div", {className: "well error"}, 
+                        React.createElement("code", null,  this.props.version), " does not satisfy contraint ", React.createElement("code", null,  this.props.constraint)
+                    )
+                );
+            }
+
+            return (
+                React.createElement("div", {className: "well"}, 
+                    React.createElement("span", null, "Enter a constraint and a version to check if they match")
+                )
+            );
+        }
+    });
+
+module.exports = SemverFeedback;
+
+},{"react":148}]},{},[1]);

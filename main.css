@@ -91,3 +91,6 @@ input[type=submit] {
 .well.error {
   background-color: rgba(214, 0, 0, 0.3);
 }
+.well.success {
+  background-color: rgba(107, 214, 0, 0.3);
+}
