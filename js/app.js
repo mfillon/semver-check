@@ -19428,9 +19428,7 @@ if (typeof define === 'function' && define.amd)
 var React = require('react');
 
 var SemverCheckerForm = React.createClass({displayName: 'SemverCheckerForm',
-    handleSubmit: function(event) {
-        event.preventDefault();
-
+    handleChange: function() {
         var constraint = this.refs.constraint.getDOMNode().value.trim(),
             version = this.refs.version.getDOMNode().value.trim();
 
@@ -19457,11 +19455,9 @@ var SemverCheckerForm = React.createClass({displayName: 'SemverCheckerForm',
 
     render: function() {
         return (
-            React.createElement("form", {className: "semverCheckerForm", onSubmit: this.handleSubmit}, 
-                React.createElement("input", {type: "text", placeholder: "Constraint", ref: "constraint"}), 
-                React.createElement("input", {type: "text", placeholder: "Version", ref: "version"}), 
-
-                React.createElement("input", {type: "submit", value: "Check!"})
+            React.createElement("form", {className: "semverCheckerForm"}, 
+                React.createElement("input", {type: "text", placeholder: "Constraint", ref: "constraint", onChange: this.handleChange}), 
+                React.createElement("input", {type: "text", placeholder: "Version", ref: "version", onChange: this.handleChange})
             )
         );
     }
@@ -19475,20 +19471,39 @@ var React = require('react'),
     SemverCheckerForm = require('./semver-checker-form.jsx');
 
 var SemverChecker = React.createClass({displayName: 'SemverChecker',
+    getInitialState: function() {
+        return {
+            satisfies: null,
+            feedback: 'Enter a constraint and a version number to check if it matches.'
+        };
+    },
+
     handleSemverCheck: function(semverData) {
 
         if (semver.satisfies(semverData.version, semverData.constraint)) {
-            alert(semverData.version + " version satisfies " + semverData.constraint);
+            this.setState({
+                satisfies: true,
+                feedback: semverData.version + " version satisfies " + semverData.constraint
+            });
         } else {
-            alert(semverData.version + " version doesn't satisfie " + semverData.constraint);
+            this.setState({
+                satisfies: false,
+                feedback: semverData.version + " version doesn't satisfie " + semverData.constraint
+            });
         }
     },
+
     handleSemverValidate: function(semverData) {
         return semver.valid(semverData.version);
     },
+
     render: function() {
         return (
-            React.createElement(SemverCheckerForm, {onSemverCheck: this.handleSemverCheck, onSemverValidate: this.handleSemverValidate})
+            React.createElement("div", null, 
+                React.createElement(SemverCheckerForm, {onSemverCheck: this.handleSemverCheck, onSemverValidate: this.handleSemverValidate}), 
+
+                React.createElement("div", {className:  'well' + (this.state.satisfies === false ? ' error' : '') },  this.state.feedback)
+            )
         );
     }
 });
