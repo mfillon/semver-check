@@ -1,3 +1,95 @@
+@-webkit-keyframes shake {
+  0% {
+    -webkit-transform: translate(2px, 1px) rotate(0deg);
+            transform: translate(2px, 1px) rotate(0deg);
+  }
+  10% {
+    -webkit-transform: translate(-1px, -2px) rotate(-1deg);
+            transform: translate(-1px, -2px) rotate(-1deg);
+  }
+  20% {
+    -webkit-transform: translate(-3px, 0px) rotate(1deg);
+            transform: translate(-3px, 0px) rotate(1deg);
+  }
+  30% {
+    -webkit-transform: translate(0px, 2px) rotate(0deg);
+            transform: translate(0px, 2px) rotate(0deg);
+  }
+  40% {
+    -webkit-transform: translate(1px, -1px) rotate(1deg);
+            transform: translate(1px, -1px) rotate(1deg);
+  }
+  50% {
+    -webkit-transform: translate(-1px, 2px) rotate(-1deg);
+            transform: translate(-1px, 2px) rotate(-1deg);
+  }
+  60% {
+    -webkit-transform: translate(-3px, 1px) rotate(0deg);
+            transform: translate(-3px, 1px) rotate(0deg);
+  }
+  70% {
+    -webkit-transform: translate(2px, 1px) rotate(-1deg);
+            transform: translate(2px, 1px) rotate(-1deg);
+  }
+  80% {
+    -webkit-transform: translate(-1px, -1px) rotate(1deg);
+            transform: translate(-1px, -1px) rotate(1deg);
+  }
+  90% {
+    -webkit-transform: translate(2px, 2px) rotate(0deg);
+            transform: translate(2px, 2px) rotate(0deg);
+  }
+  100% {
+    -webkit-transform: translate(1px, -2px) rotate(-1deg);
+            transform: translate(1px, -2px) rotate(-1deg);
+  }
+}
+@keyframes shake {
+  0% {
+    -webkit-transform: translate(2px, 1px) rotate(0deg);
+            transform: translate(2px, 1px) rotate(0deg);
+  }
+  10% {
+    -webkit-transform: translate(-1px, -2px) rotate(-1deg);
+            transform: translate(-1px, -2px) rotate(-1deg);
+  }
+  20% {
+    -webkit-transform: translate(-3px, 0px) rotate(1deg);
+            transform: translate(-3px, 0px) rotate(1deg);
+  }
+  30% {
+    -webkit-transform: translate(0px, 2px) rotate(0deg);
+            transform: translate(0px, 2px) rotate(0deg);
+  }
+  40% {
+    -webkit-transform: translate(1px, -1px) rotate(1deg);
+            transform: translate(1px, -1px) rotate(1deg);
+  }
+  50% {
+    -webkit-transform: translate(-1px, 2px) rotate(-1deg);
+            transform: translate(-1px, 2px) rotate(-1deg);
+  }
+  60% {
+    -webkit-transform: translate(-3px, 1px) rotate(0deg);
+            transform: translate(-3px, 1px) rotate(0deg);
+  }
+  70% {
+    -webkit-transform: translate(2px, 1px) rotate(-1deg);
+            transform: translate(2px, 1px) rotate(-1deg);
+  }
+  80% {
+    -webkit-transform: translate(-1px, -1px) rotate(1deg);
+            transform: translate(-1px, -1px) rotate(1deg);
+  }
+  90% {
+    -webkit-transform: translate(2px, 2px) rotate(0deg);
+            transform: translate(2px, 2px) rotate(0deg);
+  }
+  100% {
+    -webkit-transform: translate(1px, -2px) rotate(-1deg);
+            transform: translate(1px, -2px) rotate(-1deg);
+  }
+}
 body {
   padding: 0;
   margin: 0;
@@ -11,8 +103,14 @@ a:visited {
   color: #333333;
   text-decoration: none;
 }
+a:active {
+  color: rgba(51, 51, 51, 0.3);
+}
 a:hover {
   text-decoration: underline;
+}
+form {
+  margin-bottom: 2em;
 }
 #content {
   text-align: center;
@@ -21,11 +119,13 @@ a:hover {
   text-align: center;
   background-color: rgba(207, 207, 207, 0.3);
   padding: 0.5em 0;
-  margin: 2em 0 0 0;
   left: 0;
   right: 0;
   bottom: 0;
   position: absolute;
+}
+.avatars h3 {
+  margin-top: 0;
 }
 .avatars ul {
   margin: 0;
@@ -37,13 +137,30 @@ a:hover {
   list-style-type: none;
   display: inline-block;
 }
+.avatars ul .avatar:hover img {
+  -webkit-animation-name: shake;
+          animation-name: shake;
+  -webkit-animation-duration: 0.8s;
+          animation-duration: 0.8s;
+  -webkit-transform-origin: 50% 50%;
+      -ms-transform-origin: 50% 50%;
+          transform-origin: 50% 50%;
+  -webkit-animation-iteration-count: infinite;
+          animation-iteration-count: infinite;
+  -webkit-animation-timing-function: linear;
+          animation-timing-function: linear;
+}
 .avatars ul .avatar + .avatar {
   margin-left: 50px;
 }
+.avatars ul .avatar a {
+  display: block;
+}
 .avatars ul .avatar img {
-  height: 100px;
+  width: 5em;
+  margin: 0 auto;
   border-radius: 50%;
-  margin-bottom: 2em;
+  margin-bottom: 1em;
   display: block;
   border: 5px solid black;
   background-color: #fff;
@@ -76,9 +193,6 @@ input.error {
 input[type=submit] {
   background-color: rgba(207, 207, 207, 0.3);
 }
-.semverCheckerForm {
-  margin-bottom: 2em;
-}
 .well {
   width: 32em;
   margin: 0 auto;
@@ -93,4 +207,8 @@ input[type=submit] {
 }
 .well.success {
   background-color: rgba(107, 214, 0, 0.3);
+}
+.well ul,
+.well p {
+  text-align: left;
 }
