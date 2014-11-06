@@ -1,6 +1,7 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var React = require('react'),
-    semver = require('semver');
+    semver = require('semver'),
+    SemverConstraint = require('./libs/semver-constraint.js');
 
 var SemverChecker = require('./components/semver-checker.jsx');
 
@@ -9,7 +10,7 @@ React.render(
     document.getElementById('content')
 );
 
-},{"./components/semver-checker.jsx":151,"react":148,"semver":149}],2:[function(require,module,exports){
+},{"./components/semver-checker.jsx":151,"./libs/semver-constraint.js":160,"react":148,"semver":149}],2:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -19503,233 +19504,206 @@ var SemverChecker = React.createClass({displayName: 'SemverChecker',
 
 module.exports = SemverChecker;
 
-},{"./semver-checker-form.jsx":150,"./semver-explain.jsx":152,"./semver-feedback.jsx":153,"react":148,"semver":149}],152:[function(require,module,exports){
+},{"./semver-checker-form.jsx":150,"./semver-explain.jsx":157,"./semver-feedback.jsx":158,"react":148,"semver":149}],152:[function(require,module,exports){
 var React = require('react'),
-    semver = require('semver');
+    If = require('./semver-if.jsx'),
+    SemverConstraint = require('../libs/semver-constraint.js');
 
-var If = React.createClass({displayName: 'If',
+var SemverExplainConstraintIncludes = React.createClass({displayName: 'SemverExplainConstraintIncludes',
         render: function() {
-            if (this.props.test) {
-                return this.props.children;
-            }
-
-            return false;
-        }
-    }),
-    SemverExplain = React.createClass({displayName: 'SemverExplain',
-        padVersion: function(version, padding) {
-            version = version.toString().split('.');
-
-            while (version.length < 3) {
-                version.push(padding);
-            }
-
-            return version.join('.');
-        },
-        render: function() {
-            if (!this.props.version || !this.props.constraint) {
+            if (!this.props.constraint) {
                 return false;
             }
 
-            var cleaned = this.props.constraint.replace(/^(\^|~|<|>)/, ''),
-                padded = this.padVersion(cleaned, '0'),
-                explain = {
-                    constraint: {
-                        type: 'version',
-                        translated: null,
-                        warning: false,
-                        value: this.props.constraint,
-                        parts: cleaned.split('.'),
-                        include: {
-                            major: false,
-                            minor: false,
-                            patch: false
-                        },
-                        next: {
-                            major: semver.inc(padded, 'major'),
-                            minor: semver.inc(padded, 'minor'),
-                            patch: semver.inc(padded, 'patch')
-                        }
-                    },
-                    version: {
-                        parts: this.props.version.split('.'),
-                        next: {
-                            major: semver.inc(this.props.version, 'major'),
-                            minor: semver.inc(this.props.version, 'minor'),
-                            patch: semver.inc(this.props.version, 'patch')
-                        }
-                    }
-                },
-                inclusive = false,
-                lower, upper;
+            this.props.constraint = new SemverConstraint(this.props.constraint);
 
-            switch (true) {
-                case explain.constraint.value.indexOf('||') > -1:
-                    explain.constraint.type = 'range (advanced)';
-                    break;
+            var include = this.props.constraint.includes();
 
-                case explain.constraint.value.indexOf(' - ') > -1:
-                    explain.constraint.type = 'range (hyphen)';
-
-                    var parts = explain.constraint.value.split(' - ');
-                    lower = this.padVersion(parts[0], '0');
-                    upper = this.padVersion(parts[1], '0');
-                    inclusive = true;
-                    break;
-
-                case explain.constraint.value.indexOf('~') === 0:
-                    explain.constraint.type = 'range (tilde)';
-                    lower = this.padVersion(explain.constraint.value.replace(/^~\s*/, ''), '0');
-
-                    if (explain.constraint.parts.length === 1) {
-                        upper = explain.constraint.next.major;
-                        explain.constraint.include.minor = true;
-                        explain.constraint.include.patch = true;
-                    } else {
-                        upper = explain.constraint.next.minor;
-                        explain.constraint.include.patch = true;
-                    }
-                    break;
-
-                case explain.constraint.value.indexOf('^') === 0:
-                    explain.constraint.type = 'range (caret)';
-                    lower = explain.constraint.value.replace(/^\^\s*/, '').replace(/\.(x|X)/, '');
-                    explain.constraint.parts = lower.split('.');
-
-                    if (explain.constraint.parts[0] === '0') {
-                        if (explain.constraint.parts.length > 1) {
-                            if (explain.constraint.parts[1] !== '0') {
-                                upper = semver.inc(this.padVersion(lower, '0'), 'minor');
-                            } else {
-                                if (explain.constraint.parts.length === 1) {
-                                    upper = semver.inc(this.padVersion(lower, '0'), 'major');
-                                    explain.constraint.include.minor = true;
-                                }
-
-                                if (explain.constraint.parts.length === 2) {
-                                    upper = semver.inc(this.padVersion(lower, '0'), 'minor');
-                                }
-
-                                if (explain.constraint.parts.length === 3) {
-                                    upper = explain.constraint.next.patch;
-                                }
-                            }
-                        } else {
-                            upper = semver.inc(this.padVersion(lower, '0'), 'major');
-                            explain.constraint.include.minor = true;
-                        }
-                    } else {
-                        upper = semver.inc(this.padVersion(lower, '0'), 'major');
-                        explain.constraint.include.minor = true;
-                    }
-
-                    explain.constraint.include.patch = true;
-                    lower = this.padVersion(lower, '0');
-                    break;
-
-                case explain.constraint.value.indexOf('>') === 0:
-                    explain.constraint.type = 'range';
-                    lower = this.padVersion(explain.constraint.value.replace(/^>\s*/, ''), '0');
-
-                    if (explain.constraint.parts.length < 2) {
-                        lower = explain.constraint.next.major;
-                    } else {
-                        if (explain.constraint.parts.length < 3) {
-                            lower = explain.constraint.next.minor;
-                        } else {
-                            lower = explain.constraint.next.patch;
-                        }
-                    }
-                    break;
-
-                case explain.constraint.value.indexOf('<') === 0:
-                    explain.constraint.type = 'range';
-                    upper = this.padVersion(explain.constraint.value.replace(/^<\s*/, ''), '0');
-                    lower = '0.0.0';
-                    break;
-
-                case (!!explain.constraint.value.match(/(\*|x|X)$/) || explain.constraint.parts.length < 3):
-                    explain.constraint.type = 'wildcard';
-                    explain.constraint.parts = explain.constraint.parts.map(function(part) {
-                        return part.replace(/(x|X)$/, '*');
-                    });
-
-                    if (explain.constraint.parts[0] === '*') {
-                        explain.constraint.translated = '>=0.0.0';
-                        explain.constraint.warning = true;
-                        explain.constraint.include.major = true;
-                        explain.constraint.include.minor = true;
-                    } else {
-                        if (explain.constraint.parts[1] === '*') {
-                            upper = explain.version.next.major;
-                            explain.constraint.include.minor = true;
-                        } else {
-                            upper = explain.version.next.minor;
-                        }
-
-                        lower = this.padVersion(explain.constraint.parts.join('.').replace('*', '0'), 0);
-                    }
-
-                    explain.constraint.include.patch = true;
-                    break;
-            }
-
-            if (explain.constraint.type !== 'version') {
-                if (lower) {
-                    explain.constraint.translated = '>=' + lower;
-                }
-
-                if (!upper) {
-                    explain.constraint.warning = true;
-                } else {
-                    explain.constraint.translated += (explain.constraint.translated ? ' ' : '') + (inclusive ? '<=' : '<') + upper;
-                }
-            }
-
-            return (
-                React.createElement("div", {className: "well"}, 
-                    React.createElement("p", null, 
-                        React.createElement("code", null,  this.props.constraint), " is a ", React.createElement("strong", null,  explain.constraint.type), " constraint." + ' ' +
-                        "It means that it will match ", React.createElement("strong", null,  explain.constraint.type !== 'version' ? 'several versions' : 'a single version'), "."
-                    ), 
-                    React.createElement(If, {test:  explain.constraint.translated}, 
-                        React.createElement("p", null, "In fact, the current constraint will be satisfied by any version matching ", React.createElement("code", null,  explain.constraint.translated))
-                    ), 
-                    React.createElement(If, {test:  explain.constraint.warning}, 
-                        React.createElement("p", null, "This range ", React.createElement("strong", null, "does not provide an upper bound"), " which means you will probably get ", React.createElement("strong", null, "unexpected BC break"), ".")
-                    ), 
-
-                    React.createElement(If, {test:  explain.constraint.include.major || explain.constraint.include.minor || explain.constraint.include.patch}, 
+            if (this.props.constraint.type() !== 'version') {
+                return (
+                    React.createElement(If, {test:  include.major || include.minor || include.patch}, 
                         React.createElement("div", null, 
                             React.createElement("p", null, "Given the constraint you entered, you will get:"), 
                             React.createElement("ul", null, 
-                                React.createElement(If, {test:  explain.constraint.include.major}, 
+                                React.createElement(If, {test:  include.major}, 
                                     React.createElement("li", null, "The next ", React.createElement("strong", null, "major"), " releases which will probably ", React.createElement("strong", null, "break stuff"))
                                 ), 
-                                React.createElement(If, {test:  explain.constraint.include.minor}, 
+                                React.createElement(If, {test:  include.minor}, 
                                     React.createElement("li", null, "The next ", React.createElement("strong", null, "minor"), " releases which will provide ", React.createElement("strong", null, "new features"))
                                 ), 
-                                React.createElement(If, {test:  explain.constraint.include.patch}, 
+                                React.createElement(If, {test:  include.patch}, 
                                     React.createElement("li", null, "The next ", React.createElement("strong", null, "patch"), " releases which will ", React.createElement("strong", null, "fix bugs"))
                                 )
                             )
                         )
+                    )
+                );
+            }
+
+            return false;
+        }
+    });
+
+module.exports = SemverExplainConstraintIncludes;
+
+},{"../libs/semver-constraint.js":160,"./semver-if.jsx":159,"react":148}],153:[function(require,module,exports){
+var React = require('react'),
+    If = require('./semver-if.jsx'),
+    SemverConstraint = require('../libs/semver-constraint.js');
+
+var SemverExplainConstraintRange = React.createClass({displayName: 'SemverExplainConstraintRange',
+        render: function() {
+            if (!this.props.constraint) {
+                return false;
+            }
+
+            this.props.constraint = new SemverConstraint(this.props.constraint);
+
+            var lower = (this.props.constraint.lower() ? this.props.constraint.lower().toString() : false),
+                upper = (this.props.constraint.upper() ? this.props.constraint.upper().toString() : false);
+
+            if (this.props.constraint.type() !== 'version') {
+                return (
+                    React.createElement("p", null, 
+                        "In fact, the current constraint will be satisfied by any version matching ", React.createElement(If, {test: lower }, React.createElement("code", null, lower )), 
+                         lower && upper ? ' ' : '', 
+                        React.createElement(If, {test: upper }, React.createElement("code", null, upper )), "."
+                    )
+                );
+            }
+
+            return false;
+        }
+    });
+
+module.exports = SemverExplainConstraintRange;
+
+},{"../libs/semver-constraint.js":160,"./semver-if.jsx":159,"react":148}],154:[function(require,module,exports){
+var React = require('react'),
+    SemverConstraint = require('../libs/semver-constraint.js'),
+    If = require('./semver-if.jsx');
+
+var SemverExplainConstraintWarning = React.createClass({displayName: 'SemverExplainConstraintWarning',
+        render: function() {
+            if (!this.props.constraint) {
+                return false;
+            }
+
+            this.props.constraint = new SemverConstraint(this.props.constraint);
+
+            return (
+                React.createElement("div", null, 
+                    React.createElement(If, {test:  !this.props.constraint.upper()}, 
+                        React.createElement("p", null, "This constraint ", React.createElement("strong", null, "does not provide an upper bound"), " which means you will probably get ", React.createElement("strong", null, "unexpected BC break"), ".")
                     ), 
 
-                    React.createElement("p", null, "Given the version you entered:"), 
-                    React.createElement("ul", null, 
-                        React.createElement("li", null, "The next ", React.createElement("strong", null, "major"), " release will be ", React.createElement("code", null,  explain.version.next.major)), 
-                        React.createElement("li", null, "The next ", React.createElement("strong", null, "minor"), " release will be ", React.createElement("code", null,  explain.version.next.minor)), 
-                        React.createElement("li", null, "The next ", React.createElement("strong", null, "patch"), " release will be ", React.createElement("code", null,  explain.version.next.patch))
+                    React.createElement(If, {test:  this.props.constraint.type() == 'version'}, 
+                        React.createElement("p", null, "This constraint ", React.createElement("strong", null, "is too strict"), " which means ", React.createElement("strong", null, "you won't even get bug fixes"), ".")
                     )
                 )
             );
         }
     });
 
+module.exports = SemverExplainConstraintWarning;
+
+},{"../libs/semver-constraint.js":160,"./semver-if.jsx":159,"react":148}],155:[function(require,module,exports){
+var React = require('react'),
+    SemverConstraint = require('../libs/semver-constraint.js');
+
+var SemverExplainConstraint = React.createClass({displayName: 'SemverExplainConstraint',
+        render: function() {
+            if (!this.props.constraint) {
+                return false;
+            }
+
+            this.props.constraint = new SemverConstraint(this.props.constraint);
+
+            return (
+                React.createElement("p", null, 
+                    React.createElement("code", null,  this.props.constraint.toString() ), " is a ", React.createElement("strong", null,  this.props.constraint.type() ), " constraint." + ' ' +
+                    "It means that it will match ", React.createElement("strong", null,  this.props.constraint.type() !== 'version' ? 'several versions' : 'a single version'), "."
+                )
+            );
+        }
+    });
+
+module.exports = SemverExplainConstraint;
+
+},{"../libs/semver-constraint.js":160,"react":148}],156:[function(require,module,exports){
+var React = require('react'),
+    semver = require('semver');
+
+var SemverExplainVersion = React.createClass({displayName: 'SemverExplainVersion',
+        render: function() {
+            if (!this.props.version) {
+                return false;
+            }
+
+            var next = {
+                major: semver.inc(this.props.version, 'major'),
+                minor: semver.inc(this.props.version, 'minor'),
+                patch: semver.inc(this.props.version, 'patch')
+            };
+
+            return (
+                React.createElement("div", null, 
+                    React.createElement("p", null, "Given the version you entered:"), 
+                    React.createElement("ul", null, 
+                        React.createElement("li", null, "The next ", React.createElement("strong", null, "major"), " release will be ", React.createElement("code", null,  next.major)), 
+                        React.createElement("li", null, "The next ", React.createElement("strong", null, "minor"), " release will be ", React.createElement("code", null,  next.minor)), 
+                        React.createElement("li", null, "The next ", React.createElement("strong", null, "patch"), " release will be ", React.createElement("code", null,  next.patch))
+                    )
+                )
+            );
+        }
+    });
+
+module.exports = SemverExplainVersion;
+
+},{"react":148,"semver":149}],157:[function(require,module,exports){
+var React = require('react'),
+    semver = require('semver'),
+    SemverExplainVersion = require('./semver-explain-version.jsx'),
+    SemverExplainConstraint = require('./semver-explain-constraint.jsx'),
+    SemverExplainConstraintRange = require('./semver-explain-constraint-range.jsx'),
+    SemverExplainConstraintWarning = require('./semver-explain-constraint-warning.jsx'),
+    SemverExplainConstraintIncludes = require('./semver-explain-constraint-includes.jsx');
+
+var SemverExplain = React.createClass({displayName: 'SemverExplain',
+    padVersion: function(version, padding) {
+        version = version.toString().split('.');
+
+        while (version.length < 3) {
+            version.push(padding);
+        }
+
+        return version.join('.');
+    },
+    render: function() {
+        if (!this.props.version || !this.props.constraint) {
+            return false;
+        }
+
+        return (
+            React.createElement("div", {className: "well"}, 
+                React.createElement(SemverExplainConstraint, {constraint:  this.props.constraint}), 
+
+                React.createElement(SemverExplainConstraintRange, {constraint:  this.props.constraint}), 
+
+                React.createElement(SemverExplainConstraintWarning, {constraint:  this.props.constraint}), 
+
+                React.createElement(SemverExplainConstraintIncludes, {constraint:  this.props.constraint}), 
+
+                React.createElement(SemverExplainVersion, {version:  this.props.version})
+            )
+        );
+    }
+});
+
 module.exports = SemverExplain;
 
-},{"react":148,"semver":149}],153:[function(require,module,exports){
+},{"./semver-explain-constraint-includes.jsx":152,"./semver-explain-constraint-range.jsx":153,"./semver-explain-constraint-warning.jsx":154,"./semver-explain-constraint.jsx":155,"./semver-explain-version.jsx":156,"react":148,"semver":149}],158:[function(require,module,exports){
 var React = require('react');
 
 var SemverFeedback = React.createClass({displayName: 'SemverFeedback',
@@ -19737,7 +19711,7 @@ var SemverFeedback = React.createClass({displayName: 'SemverFeedback',
             if (true === this.props.satisfies) {
                 return (
                     React.createElement("div", {className: "well success"}, 
-                        React.createElement("code", null,  this.props.version), " satisfies contraint ", React.createElement("code", null,  this.props.constraint)
+                        React.createElement("code", null,  this.props.version), " satisfies constraint ", React.createElement("code", null,  this.props.constraint)
                     )
                 );
             }
@@ -19745,7 +19719,7 @@ var SemverFeedback = React.createClass({displayName: 'SemverFeedback',
             if (false === this.props.satisfies) {
                 return (
                     React.createElement("div", {className: "well error"}, 
-                        React.createElement("code", null,  this.props.version), " does not satisfy contraint ", React.createElement("code", null,  this.props.constraint)
+                        React.createElement("code", null,  this.props.version), " does not satisfy constraint ", React.createElement("code", null,  this.props.constraint)
                     )
                 );
             }
@@ -19760,4 +19734,333 @@ var SemverFeedback = React.createClass({displayName: 'SemverFeedback',
 
 module.exports = SemverFeedback;
 
-},{"react":148}]},{},[1]);
+},{"react":148}],159:[function(require,module,exports){
+var React = require('react');
+
+var If = React.createClass({displayName: 'If',
+    render: function() {
+        if (this.props.test) {
+            return this.props.children;
+        }
+
+        return false;
+    }
+});
+
+module.exports = If;
+
+},{"react":148}],160:[function(require,module,exports){
+var semver = require('semver'),
+    padVersion = function (version, padding) {
+        version = version.toString().split('.');
+
+        while (version.length < 3) {
+            version.push(padding);
+        }
+
+        return version.join('.');
+    },
+    SemverConstraint = function SemverConstraint(value) {
+        this.constraint = value;
+        this.desugared = this.constraint.replace(/(x|X)/, '*');
+    };
+
+SemverConstraint.prototype = {
+    operator: function() {
+        var op = this.desugared[0];
+
+        if (/\d/.test(op)) {
+            op = '=';
+        } else {
+            if (/\d/.test(this.desugared[1]) === false) {
+                op += this.desugared[1];
+            }
+        }
+
+        var operator = op;
+
+        this.operator = function() {
+            return operator;
+        };
+
+        return operator;
+    },
+
+    parts: function() {
+        var parts = this.cleaned().split('.');
+
+        this.parts = function() {
+            return parts;
+        };
+
+        return parts;
+    },
+
+    cleaned: function() {
+        var cleaned = this.desugared.replace(/^(\^|~|<=?|>=?)\s*/, '').replace(/\.\*/, '');
+
+        this.cleaned = function() {
+            return cleaned;
+        };
+
+        return cleaned;
+    },
+
+    type: function() {
+        var type;
+
+        switch (true) {
+            case this.desugared.indexOf('||') > -1:
+                type = 'range (advanced)';
+                break;
+
+            case this.desugared.indexOf(' - ') > -1:
+                type = 'range (hyphen)';
+                break;
+
+            case this.desugared.indexOf('~') === 0:
+                type = 'range (tilde)';
+                break;
+
+            case this.desugared.indexOf('^') === 0:
+                type = 'range (caret)';
+                break;
+
+            case this.desugared.indexOf('>') === 0:
+            case this.desugared.indexOf('<') === 0:
+                type = 'range';
+                break;
+
+            case (/\*$/.test(this.desugared) || this.parts().length < 3):
+                type = 'wildcard';
+                break;
+
+            default:
+                type = 'version';
+        }
+
+        this.type = function() {
+            return type;
+        };
+
+        return type;
+    },
+
+    lower: function() {
+        var lower;
+
+        switch (this.type()) {
+            case 'range (hyphen)':
+                var parts = this.desugared.split(' - ');
+                lower = padVersion(parts[0], '0');
+                break;
+
+            case 'range (tilde)':
+                lower = padVersion(this.cleaned(), '0');
+                break;
+
+            case 'range (caret)':
+                lower = padVersion(this.cleaned(), '0');
+                break;
+
+            case 'range':
+                if (this.operator() === '>') {
+                    lower = padVersion(this.cleaned(), '0');
+                }
+
+                if (this.operator() === '<') {
+                    lower = '0.0.0';
+                }
+                break;
+
+            case 'wildcard':
+                if (this.parts()[0] === '*') {
+                    lower = '0.0.0';
+                    //explain.constraint.include.major = true;
+                    //explain.constraint.include.minor = true;
+                } else {
+                    lower = padVersion(this.desugared, 0);
+                }
+                break;
+        }
+
+        if (lower) {
+            lower = new SemverConstraint('>=' + lower.replace('*', '0'));
+        }
+
+        this.lower = function() {
+            return lower;
+        };
+
+        return lower;
+    },
+
+    upper: function() {
+        var inclusive, upper;
+
+        switch (this.type()) {
+            case 'range (hyphen)':
+                var parts = this.desugared.split(' - ');
+
+                if (parts[1].split('.').length === 1) {
+                    upper = semver.inc(padVersion(parts[1], '0'), 'major');
+                    //explain.constraint.include.minor = true;
+                }
+
+                if (parts[1].split('.').length === 2) {
+                    upper = semver.inc(padVersion(parts[1], '0'), 'minor');
+                }
+
+                if (parts[1].split('.').length === 3) {
+                    upper = parts[1];
+                    inclusive = true;
+                }
+
+                //explain.constraint.include.patch = true;
+                break;
+
+            case 'range (tilde)':
+                if (this.parts().length === 1) {
+                    upper = semver.inc(padVersion(this.cleaned(), '0'), 'major');
+                    //explain.constraint.include.minor = true;
+                } else {
+                    upper = semver.inc(padVersion(this.cleaned(), '0'), 'minor');
+                }
+
+                //explain.constraint.include.patch = true;
+                break;
+
+            case 'range (caret)':
+                if (this.parts()[0] === '0') {
+                    if (this.parts().length > 1) {
+                        if (this.parts()[1] !== '0') {
+                            upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'minor');
+                        } else {
+                            if (this.parts().length === 1) {
+                                upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'major');
+                                //explain.constraint.include.minor = true;
+                            }
+
+                            if (this.parts().length === 2) {
+                                upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'minor');
+                            }
+
+                            if (this.parts().length === 3) {
+                                upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'patch');
+                            }
+                        }
+                    } else {
+                        upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'major');
+                        //explain.constraint.include.minor = true;
+                    }
+                } else {
+                    upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'major');
+                    //explain.constraint.include.minor = true;
+                }
+
+                //explain.constraint.include.patch = true;
+                break;
+
+            case 'range':
+                if (this.operator() === '<') {
+                    upper = padVersion(this.cleaned(), '0');
+                }
+                break;
+
+            case 'wildcard':
+                if (this.parts()[0] !== '*') {
+                    if (this.parts()[1] === '*') {
+                        upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'major');
+                        //explain.constraint.include.minor = true;
+                    } else {
+                        if (this.parts().length === 1) {
+                            upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'major');
+                            //explain.constraint.include.minor = true;
+                        } else {
+                            upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'minor');
+                        }
+                    }
+                }
+
+                //explain.constraint.include.patch = true;
+                break;
+        }
+
+        if (upper) {
+            upper = new SemverConstraint('<' + (inclusive ? '=' : '') + upper);
+        }
+
+        this.upper = function() {
+            return upper;
+        };
+
+        return upper;
+    },
+
+    includes: function() {
+        var include = {
+            major: false,
+            minor: false,
+            patch: false
+        };
+
+        switch (this.type()) {
+            case 'range (tilde)':
+                if (this.parts().length === 1) {
+                    include.minor = true;
+                }
+
+                include.patch = true;
+                break;
+
+            case 'range (caret)':
+                if (this.parts()[0] === '0') {
+                    if (this.parts().length > 1) {
+                        if (this.parts()[1] === '0') {
+                            if (this.parts().length === 1) {
+                                include.minor = true;
+                            }
+                        }
+                    } else {
+                        include.minor = true;
+                    }
+                } else {
+                    include.minor = true;
+                }
+
+                include.patch = true;
+                break;
+
+            case 'wildcard':
+                if (this.parts()[0] !== '*') {
+                    if (this.parts()[1] === '*') {
+                        include.minor = true;
+                    } else {
+                        if (this.parts().length === 1) {
+                            include.minor = true;
+                        }
+                    }
+                } else {
+                    include.major = true;
+                    include.minor = true;
+                }
+
+                include.patch = true;
+                break;
+        }
+
+        this.includes = function() {
+            return include;
+        };
+
+        return include;
+    },
+
+    toString: function() {
+        return this.constraint;
+    }
+};
+
+module.exports = SemverConstraint;
+
+},{"semver":149}]},{},[1]);
