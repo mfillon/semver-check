@@ -119,10 +119,10 @@ form {
   text-align: center;
   background-color: rgba(207, 207, 207, 0.3);
   padding: 0.5em 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  position: absolute;
+  width: 100%;
+}
+:nth-of-type(even) + .avatars {
+  background-color: #fff;
 }
 .avatars h3 {
   margin-top: 0;
@@ -211,6 +211,41 @@ input[type=submit] {
 .well ul,
 .well p {
   text-align: left;
+}
+.article {
+  width: 100%;
+  padding: 0.5em 0;
+  background-color: rgba(207, 207, 207, 0.3);
+  min-height: 100px;
+  text-align: left;
+}
+#content + .article {
+  margin-top: 2em;
+}
+.article:nth-of-type(odd) {
+  background-color: #fff;
+}
+.article:nth-of-type(odd) blockquote {
+  border-color: rgba(207, 207, 207, 0.3);
+}
+.article > h2 {
+  text-transform: uppercase;
+  margin-left: 1em;
+  margin-top: 0.5em;
+}
+.article > p {
+  padding: 0 2em;
+}
+.article blockquote,
+.article ul {
+  padding-left: 10px;
+  margin-left: 4em;
+}
+.article blockquote {
+  border-left: 5px solid #fff;
+}
+.article p {
+  text-align: justify;
 }
 .github-ribbon {
   position: absolute;
