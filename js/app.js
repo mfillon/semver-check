@@ -19472,8 +19472,7 @@ var SemverChecker = React.createClass({displayName: 'SemverChecker',
         return {
             satisfies: null,
             version: null,
-            constraint: null,
-            explain: null
+            constraint: null
         };
     },
 
@@ -19593,7 +19592,7 @@ var SemverExplainConstraintWarning = React.createClass({displayName: 'SemverExpl
 
             return (
                 React.createElement("div", null, 
-                    React.createElement(If, {test:  !this.props.constraint.upper()}, 
+                    React.createElement(If, {test:  !this.props.constraint.upper() && this.props.constraint.type() !== 'version'}, 
                         React.createElement("p", null, "This constraint ", React.createElement("strong", null, "does not provide an upper bound"), " which means you will probably get ", React.createElement("strong", null, "unexpected BC break"), ".")
                     ), 
 
@@ -19876,8 +19875,6 @@ SemverConstraint.prototype = {
             case 'wildcard':
                 if (this.parts()[0] === '*') {
                     lower = '0.0.0';
-                    //explain.constraint.include.major = true;
-                    //explain.constraint.include.minor = true;
                 } else {
                     lower = padVersion(this.desugared, 0);
                 }
@@ -19904,7 +19901,6 @@ SemverConstraint.prototype = {
 
                 if (parts[1].split('.').length === 1) {
                     upper = semver.inc(padVersion(parts[1], '0'), 'major');
-                    //explain.constraint.include.minor = true;
                 }
 
                 if (parts[1].split('.').length === 2) {
@@ -19915,19 +19911,14 @@ SemverConstraint.prototype = {
                     upper = parts[1];
                     inclusive = true;
                 }
-
-                //explain.constraint.include.patch = true;
                 break;
 
             case 'range (tilde)':
                 if (this.parts().length === 1) {
                     upper = semver.inc(padVersion(this.cleaned(), '0'), 'major');
-                    //explain.constraint.include.minor = true;
                 } else {
                     upper = semver.inc(padVersion(this.cleaned(), '0'), 'minor');
                 }
-
-                //explain.constraint.include.patch = true;
                 break;
 
             case 'range (caret)':
@@ -19938,7 +19929,6 @@ SemverConstraint.prototype = {
                         } else {
                             if (this.parts().length === 1) {
                                 upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'major');
-                                //explain.constraint.include.minor = true;
                             }
 
                             if (this.parts().length === 2) {
@@ -19951,14 +19941,10 @@ SemverConstraint.prototype = {
                         }
                     } else {
                         upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'major');
-                        //explain.constraint.include.minor = true;
                     }
                 } else {
                     upper = semver.inc(padVersion(this.lower().cleaned(), '0'), 'major');
-                    //explain.constraint.include.minor = true;
                 }
-
-                //explain.constraint.include.patch = true;
                 break;
 
             case 'range':
@@ -19981,8 +19967,6 @@ SemverConstraint.prototype = {
                         }
                     }
                 }
-
-                //explain.constraint.include.patch = true;
                 break;
         }
 
